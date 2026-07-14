@@ -917,7 +917,6 @@ footer {
     <a href="#projects">Projects</a>
     <a href="#expertise">Expertise</a>
     <a href="#tools">Tools</a>
-    <a href="#contact" class="nav-cta">Hire Me</a>
   </div>
 </nav>
 
@@ -947,7 +946,6 @@ footer {
   <p class="hero-desc">Building high-converting funnels and end-to-end marketing systems in GoHighLevel — from lead capture to conversion.</p>
   <div class="hero-actions">
     <a href="#projects" class="btn-primary">View Funnels</a>
-    <button class="btn-outline" onclick="openCalendlyModal()" style="border:none;cursor:pointer;font-family:'Outfit',sans-serif;">Start a Project</button>
   </div>
   <div class="hero-scroll">
     <span>Scroll</span>
@@ -1104,7 +1102,7 @@ footer {
     <div class="automation-note" style="--note-color:#c8e6c4;--rot:-1deg">
       <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#88cc66,#336622)"></div>
       <div class="auto-preview">
-        <iframe src="https://jimleverage.github.io/automation/" title="Advanced Automation Preview" loading="lazy" scrolling="no"></iframe>
+        <iframe src="https://YOUR-USERNAME.github.io/Jim/" title="Advanced Automation Preview" loading="lazy" scrolling="no"></iframe>
       </div>
       <div class="auto-caption">
         <div class="auto-tags">
@@ -1114,7 +1112,7 @@ footer {
           <span class="funnel-tag">Zapier</span>
         </div>
         <p class="auto-desc">Multi-step automation systems, smart pipelines, and hands-free follow-up that runs 24/7 — built for real client results.</p>
-        <a class="auto-cta" href="https://jimleverage.github.io/automation/" target="_blank" rel="noopener">View Full Site →</a>
+        <a class="auto-cta" href="https://YOUR-USERNAME.github.io/Jim/" target="_blank" rel="noopener">View Full Site →</a>
       </div>
     </div>
   </div>
@@ -1186,20 +1184,6 @@ footer {
   </div>
 </div>
 
-<!-- CALENDLY MODAL -->
-<div class="modal-backdrop" id="calendlyBackdrop" onclick="if(event.target===this)closeCalendlyModal()">
-  <div class="modal" id="calendlyModal" style="background:#f5e642;max-width:680px;width:100%;padding:52px 24px 28px;" role="dialog" aria-modal="true">
-    <div class="modal-pin" style="background:radial-gradient(circle at 35% 35%,#ff6644,#aa2200)"></div>
-    <button class="modal-close" onclick="closeCalendlyModal()" aria-label="Close" style="position:absolute;top:12px;right:14px;z-index:999;">✕</button>
-    <div class="modal-num">Book a Call</div>
-    <h2 style="font-family:'Caveat',cursive;font-size:clamp(24px,4vw,34px);color:#1a1714;margin-bottom:16px;">Let's talk about your project</h2>
-    <p style="font-size:13px;color:rgba(26,24,22,0.62);margin-bottom:16px;padding-bottom:16px;border-bottom:1.5px dashed rgba(26,24,22,0.22);">Pick a time that works for you — 30 minutes, no pressure.</p>
-    <div style="border-radius:4px;overflow:hidden;height:520px;box-shadow:0 2px 12px rgba(0,0,0,0.15);position:relative;">
-      <iframe src="https://calendly.com/YOUR-CALENDLY-USERNAME/30min?embed_type=Inline&hide_landing_page_details=1&hide_gdpr_banner=1" width="100%" height="100%" frameborder="0" title="Schedule a call"></iframe>
-    </div>
-  </div>
-</div>
-
 <!-- TOOLS -->
 <section class="tools-section" id="tools">
   <div style="max-width:1200px;margin:0 auto">
@@ -1220,21 +1204,12 @@ footer {
   </div>
 </section>
 
-<!-- CTA -->
-<section class="cta-section" id="contact">
-  <div class="section-label">Let's Work</div>
-  <h2>Ready to <em>Automate</em><br>Your Growth?</h2>
-  <p>Let's build a funnel system that captures leads, nurtures them automatically, and converts — without the manual work.</p>
-  <button class="btn-primary" onclick="openCalendlyModal()" style="position:relative;z-index:10;">Start a Project</button>
-</section>
-
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">Jim<span>.</span>GHL</div>
   <div class="footer-links">
     <a href="#projects">Projects</a>
     <a href="#expertise">Expertise</a>
-    <a href="#contact">Contact</a>
   </div>
   <div class="footer-copy">&copy; 2025 Jimuel</div>
 </footer>
@@ -1507,7 +1482,7 @@ function openModal(id) {
     '<ul class="modal-list">' + whatsHtml + '</ul>' +
     '<div class="modal-section-title">' + d.outcomeLabel + '</div>' +
     '<div class="modal-outcome"><p>' + d.outcome + '</p></div>' +
-    '<button class="modal-cta" onclick="openCalendlyModal()">Work with me on this →</button>';
+    '';
   backdrop.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1544,11 +1519,11 @@ gsap.fromTo('.stat-cell', { opacity: 0, y: 20 }, {
 
 // ─── Calendly Modal ───
 function openCalendlyModal() {
-  document.getElementById('calendlyBackdrop').classList.add('open');
+  var cb=document.getElementById('calendlyBackdrop'); if(cb)cb.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeCalendlyModal() {
-  document.getElementById('calendlyBackdrop').classList.remove('open');
+  var cb2=document.getElementById('calendlyBackdrop'); if(cb2)cb2.classList.remove('open');
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', function(e) {
