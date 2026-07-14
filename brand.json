@@ -1,0 +1,29 @@
+{
+  "name": "Toni & Guy Bahrain",
+  "category": "luxury",
+  "tagline": "One of a kind",
+  "headline": "Where Hair Becomes Art",
+  "services": [
+    "Balayage",
+    "Root Stretch & Lumi Ombrage",
+    "Ultimate Blonde",
+    "KeraStraight",
+    "Global Colour",
+    "Men's Grooming"
+  ],
+  "cta": { "text": "Book Online", "url": "https://toniandguybh.com" },
+  "contact": { "email": "", "phone": "", "address": "Bahrain" },
+  "logo_url": "http://toniandguybh.com/wp-content/uploads/2018/11/Toni_Guy_logo_main2.png",
+  "colors": {
+    "primary": "#000000",
+    "secondary": "#ffffff",
+    "accent": "#cca776",
+    "background": "#0a0a0a",
+    "text": "#f1f2f2"
+  },
+  "fonts": {
+    "heading": "Cormorant Garamond",
+    "body": "Roboto"
+  },
+  "tone": "elegant"
+}
