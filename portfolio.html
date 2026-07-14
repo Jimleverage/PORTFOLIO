@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jimuel — GHL Funnel Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+:root {
+  --bg: #bdb8b0;
+  --surface: #b0aba3;
+  --cork: #a89e92;
+  --text: #1a1714;
+  --muted: #5a5450;
+  --accent: #cc2200;
+  --accent-yellow: #e8c547;
+  --accent-blue: #2a5ca8;
+  --border: rgba(0,0,0,0.15);
+  --note-yellow: #f5e642;
+  --note-blue: #b8d4ee;
+  --note-pink: #f0b8c8;
+  --note-green: #c8e6c4;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background-color: #bdb8b0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+/* Vignette edges */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9997;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 50%, rgba(80,70,60,0.35) 100%);
+}
+/* Global graph-paper grid */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ─── CURSOR GLOW ─── */
+.cursor-glow {
+  position: fixed;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: left 0.1s ease, top 0.1s ease;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 48px;
+  transition: background 0.4s, padding 0.4s, border-color 0.4s;
+  border-bottom: 1px solid transparent;
+}
+nav.scrolled {
+  background: rgba(180,174,166,0.92);
+  backdrop-filter: blur(16px);
+  padding: 18px 48px;
+  border-color: rgba(0,0,0,0.12);
+}
+.nav-logo {
+  font-family: 'Caveat', cursive;
+  font-size: 22px; font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text); text-decoration: none;
+}
+.nav-logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 36px; align-items: center; }
+.nav-links a {
+  font-size: 12px; font-weight: 400; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  padding: 9px 22px;
+  background: var(--accent);
+  color: #fff !important;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: opacity 0.2s !important;
+  border: none;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* ─── HERO ─── */
+.hero {
+  position: relative; min-height: 90dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 100px 24px 60px;
+  overflow: hidden;
+}
+.hero-spotlight {
+  position: absolute; top: -300px; left: 50%; transform: translateX(-50%);
+  width: 1100px; height: 1100px; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.2) 25%, transparent 60%);
+  pointer-events: none; z-index: 2;
+}
+.hero-eyebrow {
+  font-family: 'Caveat', cursive;
+  font-size: 18px; font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--muted); margin-bottom: 16px;
+  position: relative; z-index: 5;
+}
+.hero-eyebrow span { color: var(--accent); }
+/* Floating handwritten annotations */
+.hero-annotation {
+  position: absolute; z-index: 10;
+  font-family: 'Caveat', cursive;
+  font-size: 17px; font-weight: 600;
+  color: rgba(232,228,218,0.55); line-height: 1.4;
+  pointer-events: none;
+}
+.hero-annotation.tl { top: 24%; left: 5%; text-align: right; }
+.hero-annotation.tr { top: 24%; right: 5%; text-align: left; }
+.hero-annotation.bl { bottom: 24%; left: 5%; text-align: right; }
+.hero-annotation.br { bottom: 24%; right: 5%; text-align: left; }
+.hero-annotation svg { display: block; margin: 4px auto 0; }
+@media (max-width: 900px) { .hero-annotation { display: none; } }
+.hero-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 400; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 4px; position: relative; z-index: 5;
+}
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(100px, 20vw, 260px);
+  font-weight: 400; letter-spacing: 0.02em;
+  line-height: 0.88; color: var(--text);
+  text-transform: uppercase;
+  position: relative; z-index: 5;
+  text-shadow: 2px 4px 16px rgba(0,0,0,0.2);
+}
+.hero-title .scramble-target { display: block; }
+.hero-subtitle {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; margin-top: 20px;
+  font-size: clamp(11px, 1.4vw, 14px);
+  font-weight: 400; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--muted);
+  position: relative; z-index: 5;
+}
+.hero-subtitle .sep {
+  display: inline-block; width: 4px; height: 4px;
+  background: var(--accent); border-radius: 50%;
+}
+.hero-desc {
+  margin-top: 40px; font-size: 16px; color: var(--muted);
+  max-width: 50ch; line-height: 1.65;
+  position: relative; z-index: 5;
+}
+.hero-actions {
+  display: flex; gap: 16px; align-items: center;
+  margin-top: 48px; position: relative; z-index: 5;
+}
+.btn-primary {
+  display: inline-block; padding: 14px 40px;
+  background: var(--accent); color: #fff;
+  text-decoration: none; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border-radius: 4px; transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 4px 20px rgba(204,34,0,0.35);
+  border: none; cursor: pointer; font-family: 'Outfit', sans-serif;
+}
+.btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+.btn-outline {
+  display: inline-block; padding: 14px 40px;
+  border: 1.5px solid rgba(0,0,0,0.3); color: var(--text);
+  text-decoration: none; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border-radius: 4px; transition: border-color 0.2s, background 0.2s;
+  background: rgba(255,255,255,0.2);
+}
+.btn-outline:hover { border-color: rgba(0,0,0,0.5); background: rgba(255,255,255,0.35); }
+.hero-scroll {
+  position: absolute; bottom: 36px; left: 50%;
+  transform: translateX(-50%); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.hero-scroll span {
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.scroll-line {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse { 0%,100%{opacity:0.2} 50%{opacity:0.8} }
+
+/* ─── MARQUEE ─── */
+.marquee-section {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 5;
+}
+.marquee-row {
+  display: flex; white-space: nowrap;
+  will-change: transform;
+}
+.marquee-row + .marquee-row { margin-top: 0; }
+.marquee-content { display: flex; align-items: center; flex-shrink: 0; }
+
+/* Dark band row */
+.marquee-row.filled {
+  background: #1a1714;
+  padding: 16px 0;
+}
+.marquee-row.filled .marquee-item {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 400; letter-spacing: 0.05em;
+  color: #e8e4da; padding: 0 32px;
+}
+.marquee-row.filled .marquee-item .dot {
+  display: inline-block; width: 8px; height: 8px;
+  background: var(--accent); border-radius: 50%;
+  margin: 0 16px;
+}
+/* Outlined row */
+.marquee-row.outlined {
+  padding: 20px 0;
+  background: transparent;
+}
+.marquee-row.outlined .marquee-item {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 400; letter-spacing: 0.05em;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(0,0,0,0.25);
+  padding: 0 32px;
+}
+.marquee-row.outlined .marquee-item .dot {
+  display: inline-block; width: 8px; height: 8px;
+  border: 1.5px solid rgba(0,0,0,0.25); border-radius: 50%;
+  margin: 0 16px;
+}
+
+/* ─── SECTION SHARED ─── */
+.section-wrap { padding: 72px 48px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 5; }
+.section-label {
+  font-family: 'Caveat', cursive;
+  font-size: 20px; font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent); margin-bottom: 8px;
+  display: inline-block;
+}
+/* Spotlight for any section */
+.section-spotlight {
+  position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 30%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+.section-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 400; letter-spacing: 0.02em;
+  color: var(--text); margin-bottom: 60px;
+  line-height: 1; max-width: 700px;
+}
+
+/* ─── PROJECTS PHOTO GRID ─── */
+.projects-stage {
+  background: transparent;
+  position: relative;
+}
+.funnel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px 24px;
+  background: var(--cork);
+  border-radius: 20px;
+  padding: 48px 40px;
+  position: relative;
+  box-shadow: inset 0 2px 20px rgba(0,0,0,0.4);
+}
+.funnel-grid::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 20px;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px);
+  pointer-events: none;
+}
+.funnel-card {
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  text-decoration: none;
+  transform: rotate(var(--frot, 0deg));
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s;
+}
+.funnel-card:hover {
+  transform: rotate(0deg) translateY(-8px) scale(1.02);
+  z-index: 10;
+}
+/* Photo print frame */
+.funnel-frame {
+  background: #fff;
+  padding: 10px 10px 48px;
+  box-shadow: 3px 4px 16px rgba(0,0,0,0.22), 6px 8px 32px rgba(0,0,0,0.12);
+  border-radius: 2px;
+  position: relative;
+}
+.funnel-frame::before {
+  content: '';
+  position: absolute; inset: 10px 10px 48px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.07);
+  pointer-events: none; z-index: 2;
+}
+/* Tape strip at top */
+.funnel-tape {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  width: 64px; height: 20px;
+  background: rgba(255,255,240,0.7);
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  z-index: 3;
+}
+.funnel-screenshot {
+  width: 100%; aspect-ratio: 4/3;
+  object-fit: cover; object-position: top;
+  display: block;
+  background: #1a1814;
+  background-size: cover; background-position: top center;
+}
+/* Handwritten caption below photo */
+.funnel-caption {
+  padding: 10px 4px 4px;
+  text-align: center;
+}
+.funnel-industry {
+  font-family: 'Caveat', cursive;
+  font-size: 12px; font-weight: 600;
+  color: rgba(26,24,22,0.4);
+  margin-bottom: 2px; letter-spacing: 0.04em;
+}
+.funnel-name {
+  font-family: 'Caveat', cursive;
+  font-size: 20px; font-weight: 700;
+  color: #1a1714; line-height: 1.1;
+}
+/* Tags below the frame */
+.funnel-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 14px; justify-content: center;
+}
+.funnel-tag {
+  font-size: 10px; font-weight: 500; padding: 3px 10px;
+  border-radius: 3px;
+  background: rgba(26,24,22,0.08);
+  color: rgba(26,24,22,0.55);
+  border: 1px solid rgba(26,24,22,0.12);
+}
+.funnel-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px; font-family: 'Outfit', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cc2200; text-decoration: none;
+  background: transparent;
+  padding: 0;
+  transition: gap 0.2s, opacity 0.2s;
+}
+.funnel-cta:hover { gap: 10px; opacity: 0.75; }
+
+@media (max-width: 900px) { .funnel-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
+/* ─── ACCORDION SLIDER ─── */
+.accordion {
+  display: flex; gap: 8px;
+  height: 72vh; min-height: 440px; max-height: 640px;
+  border-radius: 16px; overflow: hidden;
+}
+.accordion-panel {
+  flex: 1; border-radius: 14px; overflow: hidden;
+  position: relative; cursor: pointer;
+  transition: flex 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-panel:hover { flex: 5; }
+.panel-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center top;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-panel:hover .panel-bg { transform: scale(1.04); }
+.panel-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,8,6,0.92) 0%, rgba(10,8,6,0.35) 45%, rgba(10,8,6,0.05) 100%);
+}
+.panel-side-label {
+  position: absolute; bottom: 28px; left: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  color: var(--muted); z-index: 2;
+  transition: opacity 0.3s;
+}
+.accordion-panel:hover .panel-side-label { opacity: 0; }
+.panel-content {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 32px 28px; z-index: 2;
+  opacity: 0; transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s,
+              transform 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s;
+}
+.accordion-panel:hover .panel-content { opacity: 1; transform: translateY(0); pointer-events: all; }
+.panel-industry {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-industry::before {
+  content: ''; display: inline-block;
+  width: 18px; height: 1px; background: var(--accent);
+}
+.panel-content h3 {
+  font-size: clamp(20px, 2.5vw, 28px); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--text);
+  margin-bottom: 10px; line-height: 1.15;
+}
+.panel-content p {
+  font-size: 13px; color: rgba(240,237,232,0.65);
+  line-height: 1.6; max-width: 36ch; margin-bottom: 20px;
+}
+.panel-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+}
+.panel-tag {
+  font-size: 10px; font-weight: 500; padding: 4px 10px;
+  border-radius: 4px; background: rgba(255,255,255,0.07);
+  color: var(--muted); border: 1px solid rgba(255,255,255,0.08);
+}
+.panel-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); text-decoration: none;
+  transition: gap 0.2s;
+}
+.accordion-panel:hover .panel-link:hover { gap: 10px; }
+
+@media (max-width: 768px) {
+  .accordion { flex-direction: column; height: auto; min-height: auto; max-height: none; }
+  .accordion-panel { height: 64px; flex: none !important; }
+  .accordion-panel.active { height: 320px; flex: none !important; }
+  .panel-side-label { writing-mode: horizontal-tb; position: absolute; top: 50%; left: 20px; bottom: auto; transform: translateY(-50%); }
+  .accordion-panel.active .panel-side-label { display: none; }
+}
+
+/* ─── EXPERTISE — CORKBOARD ─── */
+.expertise-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px 24px;
+  background: var(--cork);
+  border-radius: 20px;
+  padding: 48px 40px;
+  position: relative;
+  box-shadow: inset 0 2px 20px rgba(0,0,0,0.4);
+}
+/* Cork texture */
+.expertise-grid::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 20px;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px);
+  pointer-events: none;
+}
+/* Sticky note card */
+.expertise-card {
+  background: var(--note-color, #f5e642);
+  border-radius: 2px;
+  padding: 44px 20px 20px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.35), 1px 1px 3px rgba(0,0,0,0.2);
+  min-height: 220px;
+}
+.expertise-card:hover {
+  transform: rotate(0deg) scale(1.04) translateY(-6px);
+  box-shadow: 6px 12px 28px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+/* Pushpin */
+.pushpin {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff6644, #aa2200);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,200,180,0.4);
+  z-index: 2;
+}
+.pushpin::after {
+  content: '';
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 8px;
+  background: linear-gradient(to bottom, #884422, #553311);
+  border-radius: 0 0 3px 3px;
+}
+/* Folded corner */
+.expertise-card::after {
+  content: '';
+  position: absolute; bottom: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 0 18px 18px;
+  border-color: transparent transparent rgba(0,0,0,0.15) transparent;
+}
+.exp-watermark { display: none; }
+.exp-icon {
+  font-size: 22px; margin-bottom: 8px;
+  display: block;
+}
+.exp-num {
+  font-family: 'Caveat', cursive;
+  font-size: 12px; color: rgba(0,0,0,0.4);
+  margin-bottom: 6px; font-weight: 600;
+}
+.expertise-card h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 20px; font-weight: 700;
+  color: #1a1816;
+  margin-bottom: 8px; line-height: 1.2;
+}
+.expertise-card p {
+  font-size: 12px; color: rgba(26,24,22,0.7);
+  line-height: 1.55; flex: 1;
+}
+.exp-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 16px; padding: 6px 14px;
+  border: 1.5px solid rgba(26,24,22,0.3);
+  border-radius: 3px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(26,24,22,0.6); background: transparent;
+  cursor: pointer; align-self: flex-start;
+  font-family: 'Outfit', sans-serif;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.exp-btn .btn-arrow { transition: transform 0.2s; }
+.expertise-card:hover .exp-btn {
+  background: rgba(26,24,22,0.1);
+  border-color: rgba(26,24,22,0.5);
+  color: rgba(26,24,22,0.9);
+}
+.expertise-card:hover .exp-btn .btn-arrow { transform: translateX(3px); }
+
+@media (max-width: 1024px) { .expertise-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .expertise-grid { grid-template-columns: 1fr; padding: 32px 20px; } }
+
+/* ─── MODAL — STICKY NOTE ─── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(80,65,50,0.6);
+  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--modal-color, #f5e642);
+  border-radius: 2px;
+  max-width: 560px; width: 100%;
+  max-height: 86vh; overflow-y: auto;
+  padding: 52px 36px 32px;
+  position: relative;
+  transform: rotate(-2deg) scale(0.9) translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 4px 8px 24px rgba(0,0,0,0.4), 10px 16px 48px rgba(0,0,0,0.2);
+}
+/* Folded corner */
+.modal::after {
+  content: '';
+  position: absolute; bottom: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 0 32px 32px;
+  border-color: transparent transparent rgba(0,0,0,0.15) transparent;
+  pointer-events: none;
+}
+.modal-backdrop.open .modal { transform: rotate(-0.5deg) scale(1) translateY(0); }
+/* Pushpin */
+.modal-pin {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff6644, #aa2200);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,200,180,0.5);
+  z-index: 3;
+}
+.modal-pin::after {
+  content: '';
+  position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
+  width: 6px; height: 11px;
+  background: linear-gradient(to bottom, #884422, #553311);
+  border-radius: 0 0 4px 4px;
+}
+.modal-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 26px; height: 26px;
+  border: 1.5px solid rgba(26,24,22,0.25); border-radius: 50%;
+  background: rgba(26,24,22,0.07); color: rgba(26,24,22,0.45);
+  font-size: 13px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+.modal-close:hover { background: rgba(26,24,22,0.18); color: rgba(26,24,22,0.9); }
+.modal-num {
+  font-family: 'Caveat', cursive;
+  font-size: 14px; font-weight: 600;
+  color: rgba(26,24,22,0.38);
+  margin-bottom: 4px;
+}
+.modal h2 {
+  font-family: 'Caveat', cursive;
+  font-size: clamp(26px, 4vw, 38px); font-weight: 700;
+  color: #1a1714; margin-bottom: 12px; line-height: 1.05;
+}
+.modal-tagline {
+  font-size: 13px; color: rgba(26,24,22,0.62);
+  line-height: 1.65; margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px dashed rgba(26,24,22,0.22);
+}
+.modal-section-title {
+  font-family: 'Caveat', cursive;
+  font-size: 15px; font-weight: 700;
+  color: rgba(26,24,22,0.45);
+  margin-bottom: 10px;
+}
+.modal-list {
+  list-style: none; display: flex; flex-direction: column; gap: 9px;
+  margin-bottom: 20px;
+}
+.modal-list li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 13px; color: rgba(26,24,22,0.82); line-height: 1.55;
+}
+.modal-list li::before {
+  content: '✓';
+  color: #cc2200; font-size: 13px; font-weight: 700;
+  flex-shrink: 0; margin-top: 1px;
+}
+.modal-outcome {
+  background: rgba(26,24,22,0.08);
+  border: 1.5px dashed rgba(26,24,22,0.22);
+  border-radius: 3px; padding: 14px 18px;
+  margin-bottom: 22px;
+}
+.modal-outcome p { font-size: 13px; color: rgba(26,24,22,0.72); line-height: 1.6; }
+.modal-outcome strong { color: #cc2200; font-weight: 700; }
+.modal-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px;
+  background: #1a1714; color: #e8e4da;
+  border-radius: 2px; text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.35);
+}
+.modal-cta:hover { opacity: 0.82; transform: translateY(-1px); }
+
+/* ─── STATS ─── */
+.stats-section {
+  padding: 80px 48px;
+  background: transparent;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  position: relative; z-index: 5;
+}
+.stats-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 2px; background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.2); border-radius: 16px;
+  overflow: hidden;
+}
+.stat-cell {
+  background: #1a1714;
+  padding: 48px 36px; text-align: center;
+}
+.stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 400; color: var(--accent);
+  letter-spacing: 0.02em; line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-family: 'Caveat', cursive;
+  font-size: 16px; font-weight: 600;
+  color: #a09890;
+}
+
+/* ─── TOOLS ─── */
+.tools-section { padding: 100px 48px; position: relative; z-index: 5; }
+.tools-inner { max-width: 1200px; margin: 0 auto; }
+.tools-grid {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  margin-top: 0;
+}
+.tool-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border: 1.5px solid rgba(0,0,0,0.2);
+  border-radius: 8px; font-size: 14px; font-weight: 500;
+  color: var(--text); background: rgba(255,255,255,0.3);
+  transition: border-color 0.2s, background 0.2s;
+  cursor: default;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.tool-pill:hover { border-color: var(--accent); background: rgba(255,255,255,0.5); }
+.tool-pill .tool-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0;
+}
+
+/* ─── CTA ─── */
+.cta-section {
+  padding: 160px 48px; text-align: center;
+  border-top: 1px solid var(--border);
+  position: relative; overflow: hidden; z-index: 5;
+}
+.cta-section::before {
+  content: '';
+  position: absolute; top: -150px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 900px; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.cta-section .section-label { justify-content: center; display: flex; }
+.cta-section h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 10vw, 120px);
+  font-weight: 400; letter-spacing: 0.03em;
+  color: var(--text); line-height: 0.92;
+  text-transform: uppercase;
+  margin: 16px 0 24px;
+  text-shadow: 2px 4px 16px rgba(0,0,0,0.15);
+}
+.cta-section h2 em {
+  font-style: normal; color: transparent;
+  -webkit-text-stroke: 2px rgba(0,0,0,0.35);
+}
+.cta-section p {
+  font-size: 16px; color: var(--muted);
+  margin-bottom: 48px; max-width: 44ch; margin-left: auto; margin-right: auto;
+}
+.contact-info {
+  display: flex; flex-direction: column; gap: 8px;
+  align-items: center; margin-top: 48px;
+}
+.contact-info a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--muted); text-decoration: none;
+  letter-spacing: 0.05em; transition: color 0.2s;
+}
+.contact-info a:hover { color: var(--accent); }
+
+/* ─── FOOTER ─── */
+footer {
+  padding: 32px 48px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: relative; z-index: 5;
+}
+.footer-logo {
+  font-family: 'Caveat', cursive;
+  font-size: 22px; font-weight: 700; color: var(--muted);
+}
+.footer-logo span { color: var(--accent); }
+.footer-copy { font-size: 12px; color: var(--muted); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a {
+  font-size: 12px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+  text-decoration: none; transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--accent); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+  .projects-grid { grid-template-columns: 1fr; }
+  .expertise-grid { grid-template-columns: 1fr; }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  nav { padding: 20px 24px; }
+  nav.scrolled { padding: 14px 24px; }
+  .nav-links { display: none; }
+  .section-wrap { padding: 80px 24px; }
+  .stats-section { padding: 60px 24px; }
+  .tools-section { padding: 60px 24px; }
+  .cta-section { padding: 100px 24px; }
+  footer { flex-direction: column; gap: 20px; text-align: center; padding: 28px 24px; }
+  .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  .hero-actions { flex-direction: column; }
+  .stats-inner { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .hero-title { font-size: 60px; }
+  .stats-inner { grid-template-columns: 1fr; }
+}
+
+/* ─── Advanced Automation Board ─── */
+.automation-board {
+  background: var(--cork);
+  border-radius: 20px;
+  padding: 48px 40px;
+  position: relative;
+  box-shadow: inset 0 2px 20px rgba(0,0,0,0.4);
+}
+.automation-board::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 20px;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px);
+  pointer-events: none;
+}
+.automation-note {
+  background: var(--note-color, #c8e6c4);
+  border-radius: 2px;
+  padding: 28px 28px 32px;
+  position: relative;
+  transform: rotate(var(--rot, 0deg));
+  box-shadow: 3px 4px 18px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.auto-preview {
+  position: relative;
+  height: 400px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  background: #111;
+}
+.auto-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
+}
+.auto-caption { display: flex; flex-direction: column; gap: 12px; }
+.auto-desc {
+  font-size: 14px;
+  color: #2a2520;
+  line-height: 1.6;
+  max-width: 70ch;
+}
+.auto-cta {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
+  align-self: flex-start;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 12px rgba(204,34,0,0.3);
+}
+.auto-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(204,34,0,0.4); }
+</style>
+</head>
+<body>
+
+<!-- Cursor Glow -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="nav-logo" href="#">Jim<span>.</span>GHL</a>
+  <div class="nav-links">
+    <a href="#projects">Projects</a>
+    <a href="#expertise">Expertise</a>
+    <a href="#tools">Tools</a>
+    <a href="#contact" class="nav-cta">Hire Me</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-spotlight"></div>
+  <!-- Floating annotations -->
+  <div class="hero-annotation tl">GoHighLevel Expert<br><svg width="40" height="28" viewBox="0 0 40 28" fill="none"><path d="M38 4 C30 6, 10 8, 4 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 24 L8 18 M4 24 L11 26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+  <div class="hero-annotation tr">Bahrain · Philippines<br><svg width="40" height="28" viewBox="0 0 40 28" fill="none"><path d="M2 4 C10 6, 30 8, 36 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M36 24 L29 18 M36 24 L32 26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+  <div class="hero-annotation bl"><svg width="40" height="28" viewBox="0 0 40 28" fill="none" style="margin-bottom:4px"><path d="M36 24 C28 22, 8 14, 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 4 L10 8 M4 4 L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>3 Live Funnels Built</div>
+  <div class="hero-annotation br"><svg width="40" height="28" viewBox="0 0 40 28" fill="none" style="margin-bottom:4px"><path d="M4 24 C12 22, 32 14, 36 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M36 4 L30 8 M36 4 L34 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Full Automation</div>
+
+  <div class="hero-eyebrow"><span>//</span> GHL Funnel Builder &amp; Marketing Automation</div>
+  <div class="hero-name">Jimuel</div>
+  <h1 class="hero-title">
+    <span class="scramble-target" data-scramble="PORTFOLIO" data-trigger="load">PORTFOLIO</span>
+  </h1>
+  <div class="hero-subtitle">
+    <span>Funnel Systems</span>
+    <span class="sep"></span>
+    <span>CRM Pipelines</span>
+    <span class="sep"></span>
+    <span>Workflow Automation</span>
+    <span class="sep"></span>
+    <span>Lead Generation</span>
+  </div>
+  <p class="hero-desc">Building high-converting funnels and end-to-end marketing systems in GoHighLevel — from lead capture to conversion.</p>
+  <div class="hero-actions">
+    <a href="#projects" class="btn-primary">View Funnels</a>
+    <button class="btn-outline" onclick="openCalendlyModal()" style="border:none;cursor:pointer;font-family:'Outfit',sans-serif;">Start a Project</button>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+
+<!-- PROJECTS -->
+<section id="projects" class="section-wrap projects-stage">
+  <div class="section-spotlight"></div>
+  <div class="section-label">Portfolio</div>
+  <div class="section-heading">Live Funnel Systems</div>
+
+  <div class="funnel-grid">
+
+    <!-- Card 1 -->
+    <a class="funnel-card" href="https://leverageph.site/orange-2501" target="_blank" rel="noopener" style="--frot:2deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('orange-preview.jpg')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Food &amp; Beverage · Product</div>
+          <div class="funnel-name">Grove Cold-Pressed OJ</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Product Funnel</span>
+        <span class="funnel-tag">Video Hero</span>
+        <span class="funnel-tag">Frame Sequence</span>
+        <span class="funnel-tag">Order System</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+    <!-- Card 5 -->
+    <a class="funnel-card" href="https://leverageph.site/ja" target="_blank" rel="noopener" style="--frot:-1.5deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('ja-preview.jpg')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Business · Service</div>
+          <div class="funnel-name">JA Page</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Lead Capture</span>
+        <span class="funnel-tag">CRM Pipeline</span>
+        <span class="funnel-tag">Automation</span>
+        <span class="funnel-tag">Follow-up System</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+    <!-- Card 6 -->
+    <a class="funnel-card" href="https://leverageph.site/movers" target="_blank" rel="noopener" style="--frot:1deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('movers-preview.jpg')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Moving &amp; Relocation · Service</div>
+          <div class="funnel-name">Movers Page</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Service Funnel</span>
+        <span class="funnel-tag">Booking System</span>
+        <span class="funnel-tag">Lead Generation</span>
+        <span class="funnel-tag">Email Automation</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+    <!-- Card 4 -->
+    <a class="funnel-card" href="https://jimleverage.github.io/toniandguy-bahrain/" target="_blank" rel="noopener" style="--frot:-2deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('https://s0.wp.com/mshots/v1/https%3A%2F%2Fjimleverage.github.io%2Ftoniandguy-bahrain%2F?w=1200&h=900')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Hair &amp; Beauty · Bahrain</div>
+          <div class="funnel-name">Toni &amp; Guy Bahrain</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Full Funnel</span>
+        <span class="funnel-tag">CRM Pipeline</span>
+        <span class="funnel-tag">Email Automation</span>
+        <span class="funnel-tag">Lead Nurturing</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+    <!-- Card 5 -->
+    <a class="funnel-card" href="https://jimleverage.github.io/petland-bahrain/" target="_blank" rel="noopener" style="--frot:1.5deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('https://s0.wp.com/mshots/v1/https%3A%2F%2Fjimleverage.github.io%2Fpetland-bahrain%2F?w=1200&h=900')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Pet &amp; Retail · Bahrain</div>
+          <div class="funnel-name">Petland Bahrain</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Lead Capture</span>
+        <span class="funnel-tag">Automation Workflows</span>
+        <span class="funnel-tag">Email Campaigns</span>
+        <span class="funnel-tag">CRM Stages</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+    <!-- Card 6 -->
+    <a class="funnel-card" href="https://jimleverage.github.io/Topaz-Detailing/" target="_blank" rel="noopener" style="--frot:-1deg">
+      <div class="funnel-frame">
+        <div class="funnel-tape"></div>
+        <div class="funnel-screenshot" style="background-image:url('https://s0.wp.com/mshots/v1/https%3A%2F%2Fjimleverage.github.io%2FTopaz-Detailing%2F?w=1200&h=900')"></div>
+        <div class="funnel-caption">
+          <div class="funnel-industry">Auto Detailing · Service</div>
+          <div class="funnel-name">Topaz Detailing</div>
+        </div>
+      </div>
+      <div class="funnel-tags">
+        <span class="funnel-tag">Booking Automation</span>
+        <span class="funnel-tag">Follow-up System</span>
+        <span class="funnel-tag">Promo Campaigns</span>
+        <span class="funnel-tag">Service Funnel</span>
+      </div>
+      <div style="text-align:center">
+        <span class="funnel-cta">View Live Site →</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+
+<!-- ADVANCED AUTOMATION -->
+<section class="section-wrap" id="automation">
+  <div class="section-spotlight"></div>
+  <div class="section-label">Advanced Automation</div>
+  <div class="section-heading">Next Level Work</div>
+  <div class="automation-board">
+    <div class="automation-note" style="--note-color:#c8e6c4;--rot:-1deg">
+      <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#88cc66,#336622)"></div>
+      <div class="auto-preview">
+        <iframe src="https://YOUR-USERNAME.github.io/Jim/" title="Advanced Automation Preview" loading="lazy" scrolling="no"></iframe>
+      </div>
+      <div class="auto-caption">
+        <div class="auto-tags">
+          <span class="funnel-tag">n8n Workflows</span>
+          <span class="funnel-tag">Make.com</span>
+          <span class="funnel-tag">GoHighLevel</span>
+          <span class="funnel-tag">Zapier</span>
+        </div>
+        <p class="auto-desc">Multi-step automation systems, smart pipelines, and hands-free follow-up that runs 24/7 — built for real client results.</p>
+        <a class="auto-cta" href="https://YOUR-USERNAME.github.io/Jim/" target="_blank" rel="noopener">View Full Site →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERTISE -->
+<section class="section-wrap" id="expertise">
+  <div class="section-spotlight"></div>
+  <div class="section-label">Expertise</div>
+  <div class="section-heading">What I Build</div>
+  <div class="expertise-grid" id="expertiseGrid">
+    <div class="expertise-card" onclick="openModal(1)" style="--note-color:#f5e642;--rot:-2deg">
+      <div class="pushpin"></div>
+      <div class="exp-icon">🖥️</div>
+      <div class="exp-num">01 — Funnels</div>
+      <h3>Funnel &amp; Website Creation</h3>
+      <p>Landing pages, multi-step funnels, and full websites built inside GHL — designed for conversion at every stage of the customer journey.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="expertise-card" onclick="openModal(2)" style="--note-color:#b8d4ee;--rot:1.5deg">
+      <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#6699dd,#334488)"></div>
+      <div class="exp-icon">📊</div>
+      <div class="exp-num">02 — CRM</div>
+      <h3>CRM Pipeline Setup</h3>
+      <p>Lead stages, opportunity tracking, and contact segmentation. Structured pipelines that give you full visibility over every deal.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="expertise-card" onclick="openModal(3)" style="--note-color:#f0b8c8;--rot:-1deg">
+      <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#cc6688,#882244)"></div>
+      <div class="exp-icon">⚡</div>
+      <div class="exp-num">03 — Automation</div>
+      <h3>Workflow Automation</h3>
+      <p>Triggers, conditions, If/Else logic — fully automated follow-up systems that reduce manual work and keep leads moving forward.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="expertise-card" onclick="openModal(4)" style="--note-color:#c8e6c4;--rot:2deg">
+      <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#66bb66,#224422)"></div>
+      <div class="exp-icon">📧</div>
+      <div class="exp-num">04 — Marketing</div>
+      <h3>Email &amp; SMS Marketing</h3>
+      <p>Campaign setup for onboarding, promotions, and re-engagement. Sequences that nurture leads and drive repeat business.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="expertise-card" onclick="openModal(5)" style="--note-color:#f5e642;--rot:-1.5deg">
+      <div class="pushpin"></div>
+      <div class="exp-icon">📅</div>
+      <div class="exp-num">05 — Booking</div>
+      <h3>Calendar &amp; Booking Automation</h3>
+      <p>Appointment booking integrated with automated reminders and follow-ups — so no lead falls through the cracks.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="expertise-card" onclick="openModal(6)" style="--note-color:#b8d4ee;--rot:0.5deg">
+      <div class="pushpin" style="background:radial-gradient(circle at 35% 35%,#6699dd,#334488)"></div>
+      <div class="exp-icon">🔗</div>
+      <div class="exp-num">06 — Integrations</div>
+      <h3>Integration &amp; API Setup</h3>
+      <p>Zapier, webhooks, and API connections linking GHL to third-party tools — building a connected, scalable marketing stack.</p>
+      <button class="exp-btn">View Details <span class="btn-arrow">→</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-pin" id="modalPin"></div>
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- CALENDLY MODAL -->
+<div class="modal-backdrop" id="calendlyBackdrop" onclick="if(event.target===this)closeCalendlyModal()">
+  <div class="modal" id="calendlyModal" style="background:#f5e642;max-width:680px;width:100%;padding:52px 24px 28px;" role="dialog" aria-modal="true">
+    <div class="modal-pin" style="background:radial-gradient(circle at 35% 35%,#ff6644,#aa2200)"></div>
+    <button class="modal-close" onclick="closeCalendlyModal()" aria-label="Close" style="position:absolute;top:12px;right:14px;z-index:999;">✕</button>
+    <div class="modal-num">Book a Call</div>
+    <h2 style="font-family:'Caveat',cursive;font-size:clamp(24px,4vw,34px);color:#1a1714;margin-bottom:16px;">Let's talk about your project</h2>
+    <p style="font-size:13px;color:rgba(26,24,22,0.62);margin-bottom:16px;padding-bottom:16px;border-bottom:1.5px dashed rgba(26,24,22,0.22);">Pick a time that works for you — 30 minutes, no pressure.</p>
+    <div style="border-radius:4px;overflow:hidden;height:520px;box-shadow:0 2px 12px rgba(0,0,0,0.15);position:relative;">
+      <iframe src="https://calendly.com/YOUR-CALENDLY-USERNAME/30min?embed_type=Inline&hide_landing_page_details=1&hide_gdpr_banner=1" width="100%" height="100%" frameborder="0" title="Schedule a call"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLS -->
+<section class="tools-section" id="tools">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-label">Stack</div>
+    <div class="section-heading" style="margin-bottom:40px">Tools I Work With</div>
+    <div class="tools-grid">
+      <div class="tool-pill"><span class="tool-dot"></span>GoHighLevel</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Zapier</div>
+      <div class="tool-pill"><span class="tool-dot"></span>n8n</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Make (Integromat)</div>
+      <div class="tool-pill"><span class="tool-dot"></span>HubSpot</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Brivity CRM</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Compass</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Email Marketing Platforms</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Webhooks &amp; API</div>
+      <div class="tool-pill"><span class="tool-dot"></span>Smart Lists &amp; Tagging</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div class="section-label">Let's Work</div>
+  <h2>Ready to <em>Automate</em><br>Your Growth?</h2>
+  <p>Let's build a funnel system that captures leads, nurtures them automatically, and converts — without the manual work.</p>
+  <button class="btn-primary" onclick="openCalendlyModal()" style="position:relative;z-index:10;">Start a Project</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Jim<span>.</span>GHL</div>
+  <div class="footer-links">
+    <a href="#projects">Projects</a>
+    <a href="#expertise">Expertise</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="footer-copy">&copy; 2025 Jimuel</div>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// ─── Cursor Glow ───
+(function() {
+  var glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', function(e) {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+})();
+
+// ─── Nav scroll ───
+window.addEventListener('scroll', function() {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ─── Text Scramble Engine ───
+(function() {
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
+
+  function scrambleText(el, finalText, duration) {
+    duration = duration || 1400;
+    var len = finalText.length;
+    var startTime = null;
+
+    function frame(ts) {
+      if (!startTime) startTime = ts;
+      var elapsed = ts - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      var html = '';
+      for (var i = 0; i < len; i++) {
+        if (finalText[i] === ' ') { html += ' '; continue; }
+        var threshold = (i / len) * 0.7 + 0.15;
+        if (progress >= threshold) {
+          html += '<span style="color:inherit">' + finalText[i] + '</span>';
+        } else {
+          html += '<span style="color:var(--muted)">' + chars[Math.floor(Math.random() * chars.length)] + '</span>';
+        }
+      }
+      el.innerHTML = html;
+      if (progress < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Fire on load for hero
+  window.addEventListener('load', function() {
+    document.querySelectorAll('[data-trigger="load"]').forEach(function(el) {
+      var text = el.dataset.scramble;
+      setTimeout(function() { scrambleText(el, text, 1600); }, 300);
+    });
+  });
+
+  // Scroll-triggered scrambles
+  document.querySelectorAll('[data-trigger="scroll"]').forEach(function(el) {
+    var text = el.dataset.scramble;
+    ScrollTrigger.create({
+      trigger: el, start: 'top 80%', once: true,
+      onEnter: function() { scrambleText(el, text, 1200); }
+    });
+  });
+})();
+
+// ─── Marquee (scroll-reactive) ───
+(function() {
+  var rows = [
+    { row: document.getElementById('mRow1'), content: document.getElementById('mContent1'), dir: -1, speed: 1 },
+    { row: document.getElementById('mRow2'), content: document.getElementById('mContent2'), dir: 1, speed: 0.7 }
+  ];
+
+  rows.forEach(function(r) {
+    for (var i = 0; i < 5; i++) r.row.appendChild(r.content.cloneNode(true));
+  });
+
+  var scrollVel = 0;
+  ScrollTrigger.create({
+    onUpdate: function(self) { scrollVel = Math.abs(self.getVelocity()); }
+  });
+
+  rows.forEach(function(r) {
+    var w = r.content.offsetWidth;
+    var x = r.dir === -1 ? 0 : -w;
+    var baseSpeed = 70;
+
+    function animate() {
+      var speed = (baseSpeed + scrollVel * 0.12) * r.speed;
+      x += r.dir * -1 * speed / 60;
+      if (r.dir === -1 && x <= -w) x += w;
+      if (r.dir === 1 && x >= 0) x -= w;
+      r.row.style.transform = 'translateX(' + x + 'px)';
+      requestAnimationFrame(animate);
+    }
+    animate();
+  });
+})();
+
+// ─── Accordion slider — click opens site ───
+(function() {
+  document.querySelectorAll('#accordion .accordion-panel').forEach(function(panel) {
+    panel.addEventListener('click', function(e) {
+      if (e.target.closest('.panel-link')) return; // let the <a> handle it
+      window.open(panel.dataset.href, '_blank', 'noopener');
+    });
+  });
+})();
+
+// ─── Spotlight grid cards (expertise only) ───
+(function() {
+  var grid = document.getElementById('expertiseGrid');
+  if (!grid) return;
+  grid.addEventListener('mousemove', function(e) {
+    grid.querySelectorAll('.expertise-card').forEach(function(c) {
+      var r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+})();
+
+// ─── Count-up stats ───
+(function() {
+  document.querySelectorAll('[data-count]').forEach(function(el) {
+    var target = parseFloat(el.dataset.count);
+    ScrollTrigger.create({
+      trigger: el, start: 'top 85%', once: true,
+      onEnter: function() {
+        var duration = 1800;
+        var startTime = null;
+        function tick(ts) {
+          if (!startTime) startTime = ts;
+          var p = Math.min((ts - startTime) / duration, 1);
+          var eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.floor(target * eased) + (target === 100 ? '%' : '+');
+          if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+    });
+  });
+})();
+
+// ─── Expertise Modals ───
+var _modalData = {
+    1: {
+      num: '01',
+      title: 'Funnel & Website Creation',
+      tagline: 'I build the full online presence — from landing page to thank-you page — inside GoHighLevel. Every element is designed around one goal: turning visitors into leads.',
+      whatLabel: 'What I build for you',
+      what: [
+        'High-converting landing pages with clear CTAs, trust signals, and optimized layout',
+        'Multi-step funnels that guide prospects from awareness to booking or purchase',
+        'Full websites with service pages, about sections, contact forms, and SEO structure',
+        'Lead capture forms and survey funnels that qualify prospects automatically',
+        'Thank-you pages and confirmation sequences that set expectations post-opt-in'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>Your business gets a 24/7 lead machine.</strong> No more relying on word-of-mouth or manual follow-up — the funnel does the selling for you while you focus on delivery.'
+    },
+    2: {
+      num: '02',
+      title: 'CRM Pipeline Setup',
+      tagline: 'A messy CRM means lost revenue. I build clean, structured pipelines so you always know exactly where every lead stands and what needs to happen next.',
+      whatLabel: 'What I set up for you',
+      what: [
+        'Custom pipeline stages mapped to your actual sales process (not a generic template)',
+        'Opportunity tracking with deal values, close probabilities, and follow-up dates',
+        'Contact segmentation using tags, smart lists, and custom fields',
+        'Automated stage movement when leads take specific actions (form fill, booking, payment)',
+        'Pipeline reporting so you can see conversion rates at every stage'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>Full visibility, zero guesswork.</strong> You\'ll know exactly how many leads are in each stage, who needs a follow-up today, and where deals are getting stuck — all in one dashboard.'
+    },
+    3: {
+      num: '03',
+      title: 'Workflow Automation',
+      tagline: 'Manual follow-up kills momentum. I build automation workflows that respond to leads instantly — 24/7 — with the right message at the right time, without you lifting a finger.',
+      whatLabel: 'What I automate for you',
+      what: [
+        'Instant lead response sequences triggered the moment someone fills a form',
+        'If/Else conditional logic that routes leads down different paths based on their answers',
+        'Automated follow-up sequences over days, weeks, or months — SMS, email, or voicemail drops',
+        'Internal notifications to your team when a hot lead takes action',
+        'Re-engagement flows for cold leads who went quiet',
+        'Post-sale onboarding sequences for new customers'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>Your business responds faster than your competitors.</strong> Studies show leads are 21x more likely to convert when contacted within 5 minutes. Automation makes that happen automatically, every time.'
+    },
+    4: {
+      num: '04',
+      title: 'Email & SMS Marketing',
+      tagline: 'I build campaigns that keep your brand top-of-mind and bring leads back when they\'re ready to buy — whether that\'s 3 days or 3 months after they first opted in.',
+      whatLabel: 'What I create for you',
+      what: [
+        'Welcome sequences for new leads that build trust from day one',
+        'Promotional campaigns for offers, launches, or seasonal deals',
+        'Re-engagement campaigns for cold contacts who haven\'t responded in 30–90 days',
+        'SMS follow-ups for high-intent leads (high open rates, instant delivery)',
+        'Drip sequences that educate and nurture over time without sounding salesy',
+        'Post-purchase sequences that turn customers into repeat buyers and referrals'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>Your list becomes a revenue channel, not just a contact database.</strong> Consistent, well-timed messaging keeps you relevant and drives conversions long after the first touch.'
+    },
+    5: {
+      num: '05',
+      title: 'Calendar & Booking Automation',
+      tagline: 'I connect your booking system to your CRM and automations so every appointment is confirmed, reminded, and followed up — without any manual coordination.',
+      whatLabel: 'What I build for you',
+      what: [
+        'GHL calendar setup with service types, availability, and buffer times configured',
+        'Automated confirmation messages sent immediately after a booking is made',
+        'Reminder sequences (24h and 1h before) via email and SMS to reduce no-shows',
+        'Post-appointment follow-ups requesting reviews or booking the next session',
+        'No-show workflows that automatically reschedule or re-engage',
+        'Booking link integration into your funnels and landing pages'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>No-shows drop. Show-up rates climb.</strong> Clients arrive prepared, you spend zero time on scheduling admin, and every appointment feeds directly into your CRM pipeline automatically.'
+    },
+    6: {
+      num: '06',
+      title: 'Integration & API Setup',
+      tagline: 'GHL is powerful on its own — but connected to the rest of your stack, it becomes the central hub of your entire marketing and sales operation.',
+      whatLabel: 'What I connect for you',
+      what: [
+        'Zapier automations linking GHL to tools like Google Sheets, Slack, Notion, or any app',
+        'Webhook setup to send and receive real-time data between GHL and external platforms',
+        'API connections for custom integrations not available through native GHL',
+        'Payment processor connections (Stripe) for funnel checkouts and subscriptions',
+        'Facebook/Instagram lead ad integration — leads flow directly into GHL instantly',
+        'Third-party CRM migration if you\'re moving from HubSpot, Brivity, or Compass'
+      ],
+      outcomeLabel: 'The result',
+      outcome: '<strong>One ecosystem, zero data silos.</strong> Every tool you use talks to GHL, so leads, data, and automations flow seamlessly without manual imports, copy-pasting, or dropped information.'
+    }
+};
+
+var _modalNoteColors = { 1:'#f5e642', 2:'#b8d4ee', 3:'#f0b8c8', 4:'#c8e6c4', 5:'#f5e642', 6:'#b8d4ee' };
+var _modalPinColors  = {
+  1:'radial-gradient(circle at 35% 35%,#ff6644,#aa2200)',
+  2:'radial-gradient(circle at 35% 35%,#6699dd,#334488)',
+  3:'radial-gradient(circle at 35% 35%,#cc6688,#882244)',
+  4:'radial-gradient(circle at 35% 35%,#66bb66,#224422)',
+  5:'radial-gradient(circle at 35% 35%,#ff6644,#aa2200)',
+  6:'radial-gradient(circle at 35% 35%,#6699dd,#334488)'
+};
+
+function openModal(id) {
+  var d = _modalData[id];
+  if (!d) return;
+  var modal = document.getElementById('modal');
+  var modalPin = document.getElementById('modalPin');
+  var modalBody = document.getElementById('modalBody');
+  var backdrop = document.getElementById('modalBackdrop');
+  modal.style.background = _modalNoteColors[id] || '#f5e642';
+  modalPin.style.background = _modalPinColors[id] || _modalPinColors[1];
+  var whatsHtml = d.what.map(function(w) { return '<li>' + w + '</li>'; }).join('');
+  modalBody.innerHTML =
+    '<div class="modal-num">' + d.num + '</div>' +
+    '<h2>' + d.title + '</h2>' +
+    '<p class="modal-tagline">' + d.tagline + '</p>' +
+    '<div class="modal-section-title">' + d.whatLabel + '</div>' +
+    '<ul class="modal-list">' + whatsHtml + '</ul>' +
+    '<div class="modal-section-title">' + d.outcomeLabel + '</div>' +
+    '<div class="modal-outcome"><p>' + d.outcome + '</p></div>' +
+    '<button class="modal-cta" onclick="openCalendlyModal()">Work with me on this →</button>';
+  backdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modalClose').onclick = closeModal;
+document.getElementById('modalBackdrop').onclick = function(e) {
+  if (e.target === this) closeModal();
+};
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeModal(); closeCalendlyModal(); }
+});
+
+gsap.fromTo('.accordion-panel', { opacity: 0, y: 20 }, {
+  opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: 'power2.out',
+  scrollTrigger: { trigger: '#projects', start: 'top 75%' }
+});
+gsap.fromTo('.expertise-card', { opacity: 0, y: 24 }, {
+  opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power2.out',
+  scrollTrigger: { trigger: '#expertise', start: 'top 75%' }
+});
+gsap.fromTo('.tool-pill', { opacity: 0, scale: 0.95 }, {
+  opacity: 1, scale: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out',
+  scrollTrigger: { trigger: '.tools-grid', start: 'top 80%' }
+});
+gsap.fromTo('.stat-cell', { opacity: 0, y: 20 }, {
+  opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out',
+  scrollTrigger: { trigger: '.stats-section', start: 'top 80%' }
+});
+
+// ─── Calendly Modal ───
+function openCalendlyModal() {
+  document.getElementById('calendlyBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCalendlyModal() {
+  document.getElementById('calendlyBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeCalendlyModal();
+});
+</script>
+</body>
+</html>
